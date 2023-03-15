@@ -1,3 +1,5 @@
+import 'package:bill_e/pages/client.dart';
+import 'package:bill_e/pages/commercant.dart';
 import 'package:bill_e/pages/home.dart';
 import 'package:bill_e/tools.dart';
 import 'package:flutter/material.dart';
@@ -21,13 +23,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
     debug: false,
-    url: "https://nhwbvtaboiaxcthybswr.supabase.co",
-    anonKey:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5od2J2dGFib2lheGN0aHlic3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzQyMjk4MTMsImV4cCI6MTk4OTgwNTgxM30.Ui3NuTipZHU8W88uLn1Fh5QrR6fdDyvDRfXn_saXbR0",
+    url: url,
+    anonKey: anonKey,
   );
-  await supabase.auth
-      .signInWithPassword(email: "user@bill-e.fr", password: "password");
-
   runApp(const Main());
 }
 
@@ -41,7 +39,162 @@ class Main extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: SignPage(),
+    );
+  }
+}
+
+class SignPage extends StatelessWidget {
+  const SignPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    //array de tickets de caisse
+    const tickets = [
+      {},
+      {},
+      {},
+    ];
+
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                "Connexion/Inscription",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            SizedBox(
+              width: 300,
+              child: Form(
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        labelText: "Email",
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: passwordController,
+                      decoration: const InputDecoration(
+                        labelText: "Password",
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () async {
+                        print(
+                          "${emailController.text}:${passwordController.text}",
+                        );
+
+                        //Try to signin with email and password if it fails try to signup
+                        //exemple client@test.fr:testtest , commercant@test.fr:testtest
+
+                        try {
+                          await supabase.auth.signInWithPassword(
+                            email: emailController.text,
+                            password: passwordController.text,
+                          );
+                        } on AuthException catch (e) {
+                          if (e.statusCode != "400") {
+                            print(e);
+                            return;
+                          }
+                          try {
+                            await supabase.auth.signUp(
+                              email: emailController.text,
+                              password: passwordController.text,
+                            );
+                          } on AuthException catch (e) {
+                            print(e);
+                            return;
+                          }
+                          //Show dialog with title "Etes vous commercants ou clients ?" and 2 buttons "Commercant" and "Client"
+                          await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text("Etes vous commercant ou client?"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () async {
+                                    await supabase.from("users").upsert({
+                                      "id": supabase.auth.currentUser?.id,
+                                      "type": "commercant",
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("Commercant"),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    await supabase.from("users").upsert({
+                                      "id": supabase.auth.currentUser?.id,
+                                      "type": "client",
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("Client"),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        //Redirect user to the page depending on his type
+                        final userInfo = await supabase
+                            .from("users")
+                            .select()
+                            .eq("id", supabase.auth.currentUser?.id)
+                            .single();
+
+                        final user = User.fromJson(userInfo);
+                        print(user.type);
+
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => user.type == "client"
+                                ? const ClientPage()
+                                : const CommercantPage(),
+                          ),
+                        );
+                      },
+                      child: const Text("Confirmer"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+//Class for user
+//Json of the user {id: 575468ce-33c3-47f1-b43d-cc9f71762478, type: client}
+class User {
+  final String id;
+  final String type;
+
+  User({
+    required this.id,
+    required this.type,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json["id"],
+      type: json["type"],
     );
   }
 }

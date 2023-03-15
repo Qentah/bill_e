@@ -9,18 +9,6 @@
       "request": "launch",
       "type": "dart",
       "args": ["--web-renderer html"]
-    },
-    {
-      "name": "bill_e (profile mode)",
-      "request": "launch",
-      "type": "dart",
-      "flutterMode": "profile"
-    },
-    {
-      "name": "bill_e (release mode)",
-      "request": "launch",
-      "type": "dart",
-      "flutterMode": "release"
     }
   ]
 }
