@@ -1,7 +1,9 @@
-import 'package:bill_e/pages/client.dart';
-import 'package:bill_e/pages/commercant.dart';
 import 'package:bill_e/pages/home.dart';
+import 'package:bill_e/pages/sections/client.dart';
+import 'package:bill_e/pages/sections/commercant.dart';
+import 'package:bill_e/pages/sections/ticket.dart';
 import 'package:bill_e/tools.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -26,6 +28,7 @@ Future<void> main() async {
     url: url,
     anonKey: anonKey,
   );
+  Supabase.instance.client.removeAllChannels();
   runApp(const Main());
 }
 
@@ -92,6 +95,18 @@ class SignPage extends StatelessWidget {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
+                        if (kDebugMode) {
+                          await supabase.auth.signInWithPassword(
+                              email: "client@test.fr", password: "testtest");
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => const HomePage(),
+                            ),
+                          );
+                          print("Sigin with email and password");
+                          return;
+                        }
+
                         print(
                           "${emailController.text}:${passwordController.text}",
                         );
@@ -163,7 +178,7 @@ class SignPage extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => user.type == "client"
                                 ? const ClientPage()
-                                : const CommercantPage(),
+                                : const TicketPage(),
                           ),
                         );
                       },

@@ -1,6 +1,7 @@
 import 'package:bill_e/abstracts/navigation_page.dart';
-import 'package:bill_e/pages/client.dart';
-import 'package:bill_e/pages/commercant.dart';
+import 'package:bill_e/pages/sections/client.dart';
+import 'package:bill_e/pages/sections/commercant.dart';
+import 'package:bill_e/pages/sections/ticket.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -13,6 +14,7 @@ class HomePage extends StatelessWidget {
     const pages = <NavigationPage>[
       ClientPage(),
       CommercantPage(),
+      TicketPage(),
     ];
 
     final pageNotifier = ValueNotifier(0);
